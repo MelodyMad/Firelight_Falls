@@ -5,45 +5,67 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
+    // Movement Variables
+    [Header("Player Movement")]
     [SerializeField]
     private float moveSpeed = 2f;
+    private float horizontalInput;
+    private float verticalInput;
+    Vector3 moveDirection;
+    Rigidbody rb;
+    [SerializeField]
+    private Transform orientation;
+
+    // Is Grounded
+    [Header("Grounded")]
+    [SerializeField]
+    private float playerHeight;
+    [SerializeField]
+    private LayerMask whatIsGround;
+    private bool grounded;
+    [SerializeField]
+    private float groundDrag;
 
 
+
+    private void Start ()
+    {
+        // Set the player to the rb and to stop the player from falling
+        rb = GetComponent<Rigidbody>();
+        rb.freezeRotation = true;
+    }
 
     private void Update()
     {
-        // Movement Vector
-        Vector2 inputVector = new Vector2 (0, 0);
-        // Move Forward
-        if (Input.GetKey(KeyCode.W))
-        {
-            inputVector.y = +1;
-        }
+        // Get the player input
+        PlayerInput();
 
-        // Move Backward
-        if (Input.GetKey(KeyCode.S))
-        {
-            inputVector.y = -1;
-        }
+        // Check if the player is on the ground
+        grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround);
+        // Handle the ground drag on the player
+        if (grounded)
+            rb.drag = groundDrag;
+        else
+            rb.drag = 0;
+    }
 
-        // Move Left
-        if (Input.GetKey(KeyCode.A))
-        {
-            inputVector.x = -1;
-        }
+    private void FixedUpdate()
+    {
+        MovePlayer();
+    }
 
-        // Move Right
-        if (Input.GetKey(KeyCode.D))
-        {
-            inputVector.x = +1;
-        }
+    // Get Movement Input
+    private void PlayerInput()
+    {
+        horizontalInput = Input.GetAxisRaw("Horizontal");
+        verticalInput = Input.GetAxisRaw("Vertical");
+    }
 
-        // To normailse the vector so that the speed is constant
-        inputVector = inputVector.normalized;
-
-        // To move in 3D
-        Vector3 moveDirection = new Vector3(inputVector.x, 0f, inputVector.y);
-        transform.position += moveDirection * moveSpeed * Time.deltaTime;
-
+    // Move the Player
+    private void MovePlayer()
+    {
+        // To move in the direction that the player is looking in
+        moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput; moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
+        rb.AddForce(moveDirection.normalized * moveSpeed, ForceMode.Force);
     }
 }
