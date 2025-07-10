@@ -2,70 +2,61 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-
 public class PlayerMovement : MonoBehaviour
 {
-    // Movement Variables
-    [Header("Player Movement")]
     [SerializeField]
-    private float moveSpeed = 2f;
-    private float horizontalInput;
-    private float verticalInput;
-    Vector3 moveDirection;
-    Rigidbody rb;
-    [SerializeField]
-    private Transform orientation;
+    private CharacterController controller;
 
-    // Is Grounded
-    [Header("Grounded")]
     [SerializeField]
-    private float playerHeight;
+    private float speed = 4f;
+
     [SerializeField]
-    private LayerMask whatIsGround;
-    private bool grounded;
+    private float gravity = -16f;
+
+    Vector3 velocity;
+    bool isGrounded;
+
     [SerializeField]
-    private float groundDrag;
+    private Transform grounchCheck;
 
+    [SerializeField]
+    private float groundDistance = 0.4f;
 
+    [SerializeField]
+    private LayerMask groundMask;
 
-    private void Start ()
+    [SerializeField]
+    private float jumpHeight = 2f;
+
+    // Start is called before the first frame update
+    void Start()
     {
-        // Set the player to the rb and to stop the player from falling
-        rb = GetComponent<Rigidbody>();
-        rb.freezeRotation = true;
+        
     }
 
-    private void Update()
+    // Update is called once per frame
+    void Update()
     {
-        // Get the player input
-        PlayerInput();
+        isGrounded = Physics.CheckSphere(grounchCheck.position, groundDistance, groundMask);
+        if (isGrounded && velocity.y<0)
+        {
+            velocity.y = -2f;
+        }
 
-        // Check if the player is on the ground
-        grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround);
-        // Handle the ground drag on the player
-        if (grounded)
-            rb.drag = groundDrag;
-        else
-            rb.drag = 0;
-    }
+        float x = Input.GetAxis("Horizontal");
+        float z = Input.GetAxis("Vertical");
 
-    private void FixedUpdate()
-    {
-        MovePlayer();
-    }
+        Vector3 move = transform.right * x + transform.forward * z;
 
-    // Get Movement Input
-    private void PlayerInput()
-    {
-        horizontalInput = Input.GetAxisRaw("Horizontal");
-        verticalInput = Input.GetAxisRaw("Vertical");
-    }
+        controller.Move(move * speed * Time.deltaTime);
 
-    // Move the Player
-    private void MovePlayer()
-    {
-        // To move in the direction that the player is looking in
-        moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput; moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
-        rb.AddForce(moveDirection.normalized * moveSpeed, ForceMode.Force);
+        if (Input.GetButtonDown("Jump") && isGrounded)
+        {
+            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+        }
+
+        velocity.y += gravity * Time.deltaTime;
+
+        controller.Move(velocity * Time.deltaTime);
     }
 }
